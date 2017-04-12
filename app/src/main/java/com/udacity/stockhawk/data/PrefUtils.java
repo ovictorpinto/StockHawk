@@ -11,21 +11,20 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class PrefUtils {
-
+    
     private PrefUtils() {
     }
-
+    
     public static Set<String> getStocks(Context context) {
         String stocksKey = context.getString(R.string.pref_stocks_key);
         String initializedKey = context.getString(R.string.pref_stocks_initialized_key);
         String[] defaultStocksList = context.getResources().getStringArray(R.array.default_stocks);
-
+        
         HashSet<String> defaultStocks = new HashSet<>(Arrays.asList(defaultStocksList));
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-
-
+        
         boolean initialized = prefs.getBoolean(initializedKey, false);
-
+        
         if (!initialized) {
             SharedPreferences.Editor editor = prefs.edit();
             editor.putBoolean(initializedKey, true);
@@ -34,58 +33,79 @@ public final class PrefUtils {
             return defaultStocks;
         }
         return prefs.getStringSet(stocksKey, new HashSet<String>());
-
+        
     }
-
-    private static void editStockPref(Context context, String symbol, Boolean add) {
-        String key = context.getString(R.string.pref_stocks_key);
+    
+    private static void editStockPref(Context context, String symbol, Boolean add, String key) {
+        
         Set<String> stocks = getStocks(context);
-
+        
         if (add) {
             stocks.add(symbol);
         } else {
             stocks.remove(symbol);
         }
-
+        
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putStringSet(key, stocks);
         editor.apply();
     }
-
+    
     public static void addStock(Context context, String symbol) {
-        editStockPref(context, symbol, true);
+        String key = context.getString(R.string.pref_stocks_key);
+        editStockPref(context, symbol, true, key);
     }
-
+    
     public static void removeStock(Context context, String symbol) {
-        editStockPref(context, symbol, false);
+        String key = context.getString(R.string.pref_stocks_key);
+        editStockPref(context, symbol, false, key);
     }
-
+    
+    public static void addStockNotFound(Context context, String symbol) {
+        String key = context.getString(R.string.pref_stocks_not_found_key);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        Set<String> stocks = prefs.getStringSet(key, new HashSet<String>());
+        stocks.add(symbol);
+        prefs.edit().putStringSet(key, stocks).apply();
+        
+        //remove from valids
+        removeStock(context, symbol);
+    }
+    
+    public static Set<String> getNotFound(Context context) {
+        String key = context.getString(R.string.pref_stocks_not_found_key);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        Set<String> itens = prefs.getStringSet(key, null);
+        prefs.edit().remove(key).apply();
+        return itens;
+    }
+    
     public static String getDisplayMode(Context context) {
         String key = context.getString(R.string.pref_display_mode_key);
         String defaultValue = context.getString(R.string.pref_display_mode_default);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         return prefs.getString(key, defaultValue);
     }
-
+    
     public static void toggleDisplayMode(Context context) {
         String key = context.getString(R.string.pref_display_mode_key);
         String absoluteKey = context.getString(R.string.pref_display_mode_absolute_key);
         String percentageKey = context.getString(R.string.pref_display_mode_percentage_key);
-
+        
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-
+        
         String displayMode = getDisplayMode(context);
-
+        
         SharedPreferences.Editor editor = prefs.edit();
-
+        
         if (displayMode.equals(absoluteKey)) {
             editor.putString(key, percentageKey);
         } else {
             editor.putString(key, absoluteKey);
         }
-
+        
         editor.apply();
     }
-
+    
 }
