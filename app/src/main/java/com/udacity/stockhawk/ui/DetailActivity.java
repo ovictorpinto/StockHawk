@@ -30,11 +30,12 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
         ButterKnife.bind(this);
-        
+    
+        symbol = getIntent().getStringExtra("symbol");
+        setTitle(getString(R.string.history_title, symbol));
         if (getActionBar() != null) {
             getActionBar().setDisplayHomeAsUpEnabled(true);
         }
-        symbol = getIntent().getStringExtra("symbol");
         
         adapter = new HistoryAdapter(this);
         stockRecyclerView.setAdapter(adapter);
@@ -50,7 +51,10 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
     
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        adapter.setCursor(data);
+        if (data.moveToFirst()) {
+            String history = data.getString(Contract.Quote.POSITION_HISTORY);
+            adapter.setCursor(history.split("\n"));
+        }
     }
     
     @Override

@@ -1,16 +1,14 @@
 package com.udacity.stockhawk.ui;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
+import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.udacity.stockhawk.R;
-import com.udacity.stockhawk.data.Contract;
-import com.udacity.stockhawk.data.PrefUtils;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -19,94 +17,58 @@ import java.util.Locale;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.StockViewHolder> {
+class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryViewHolder> {
     
     private final Context context;
-    private final DecimalFormat dollarFormatWithPlus;
     private final DecimalFormat dollarFormat;
-    private final DecimalFormat percentageFormat;
-    private Cursor cursor;
+    private String[] cursor;
     
     HistoryAdapter(Context context) {
         this.context = context;
         
         dollarFormat = (DecimalFormat) NumberFormat.getCurrencyInstance(Locale.US);
-        dollarFormatWithPlus = (DecimalFormat) NumberFormat.getCurrencyInstance(Locale.US);
-        dollarFormatWithPlus.setPositivePrefix("+$");
-        percentageFormat = (DecimalFormat) NumberFormat.getPercentInstance(Locale.getDefault());
-        percentageFormat.setMaximumFractionDigits(2);
-        percentageFormat.setMinimumFractionDigits(2);
-        percentageFormat.setPositivePrefix("+");
     }
     
-    void setCursor(Cursor cursor) {
+    void setCursor(String[] cursor) {
         this.cursor = cursor;
         notifyDataSetChanged();
     }
     
-    String getSymbolAtPosition(int position) {
+    @Override
+    public HistoryViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         
-        cursor.moveToPosition(position);
-        return cursor.getString(Contract.Quote.POSITION_SYMBOL);
+        View item = LayoutInflater.from(context).inflate(R.layout.list_item_history, parent, false);
+        
+        return new HistoryViewHolder(item);
     }
     
     @Override
-    public StockViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public void onBindViewHolder(HistoryViewHolder holder, int position) {
         
-        View item = LayoutInflater.from(context).inflate(R.layout.list_item_quote, parent, false);
+        String line = cursor[position];
         
-        return new StockViewHolder(item);
-    }
-    
-    @Override
-    public void onBindViewHolder(StockViewHolder holder, int position) {
+        String[] splitted = line.split(", ");
+        Long timestamp = Long.valueOf(splitted[0]);
+        Float value = Float.valueOf(splitted[1]);
         
-        cursor.moveToPosition(position);
-        
-        holder.symbol.setText(cursor.getString(Contract.Quote.POSITION_SYMBOL));
-        holder.price.setText(dollarFormat.format(cursor.getFloat(Contract.Quote.POSITION_PRICE)));
-        
-        float rawAbsoluteChange = cursor.getFloat(Contract.Quote.POSITION_ABSOLUTE_CHANGE);
-        float percentageChange = cursor.getFloat(Contract.Quote.POSITION_PERCENTAGE_CHANGE);
-        
-        if (rawAbsoluteChange > 0) {
-            holder.change.setBackgroundResource(R.drawable.percent_change_pill_green);
-        } else {
-            holder.change.setBackgroundResource(R.drawable.percent_change_pill_red);
-        }
-        
-        String change = dollarFormatWithPlus.format(rawAbsoluteChange);
-        String percentage = percentageFormat.format(percentageChange / 100);
-        
-        if (PrefUtils.getDisplayMode(context).equals(context.getString(R.string.pref_display_mode_absolute_key))) {
-            holder.change.setText(change);
-        } else {
-            holder.change.setText(percentage);
-        }
-        
+        holder.date.setText(DateUtils.formatDateTime(context, timestamp, DateUtils.FORMAT_SHOW_DATE));
+        holder.price.setText(dollarFormat.format(value));
     }
     
     @Override
     public int getItemCount() {
-        int count = 0;
-        if (cursor != null) {
-            count = cursor.getCount();
-        }
-        return count;
+        return cursor != null ? cursor.length : 0;
     }
     
-    class StockViewHolder extends RecyclerView.ViewHolder {
+    class HistoryViewHolder extends RecyclerView.ViewHolder {
         
-        @BindView(R.id.symbol)
-        TextView symbol;
+        @BindView(R.id.date)
+        TextView date;
         
         @BindView(R.id.price)
         TextView price;
         
-        @BindView(R.id.change)
-        TextView change;
-        
-        StockViewHolder(View itemView) {
+        HistoryViewHolder(View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
         }
