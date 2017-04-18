@@ -8,6 +8,7 @@ import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
 
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
@@ -22,6 +23,9 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
     @BindView(R.id.recycler_view)
     RecyclerView stockRecyclerView;
     
+    @BindView(android.R.id.empty)
+    View emptyView;
+    
     HistoryAdapter adapter;
     private String symbol;
     
@@ -30,7 +34,7 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
         ButterKnife.bind(this);
-    
+        
         symbol = getIntent().getStringExtra("symbol");
         setTitle(getString(R.string.history_title, symbol));
         if (getActionBar() != null) {
@@ -51,9 +55,13 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
     
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        if (data.moveToFirst()) {
+        if (data.moveToFirst() && data.getString(Contract.Quote.POSITION_HISTORY) != null && !data
+                .getString(Contract.Quote.POSITION_HISTORY).isEmpty()) {
             String history = data.getString(Contract.Quote.POSITION_HISTORY);
             adapter.setCursor(history.split("\n"));
+        } else {
+            emptyView.setVisibility(View.VISIBLE);
+            stockRecyclerView.setVisibility(View.GONE);
         }
     }
     
